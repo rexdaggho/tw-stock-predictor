@@ -53,15 +53,31 @@ print(f"📅 數據日期: {data_date_str}")
 print(f"📅 預測日期: {prediction_date_str}")
 
 # ============ 下載美股數據 ============
+# ============ 下載美股數據（帶重試機制） ============
 print("📊 正在下載美股數據...")
 
+import time
+
+def download_with_retry(ticker, start, end, max_retries=3):
+    """帶重試機制的數據下載函數"""
+    for attempt in range(max_retries):
+        try:
+            data = yf.download(ticker, start=start, end=end, progress=False)
+            if len(data) > 0:
+                return data
+        except Exception as e:
+            print(f"⚠️ 下載 {ticker} 嘗試 {attempt+1} 失敗: {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(2)  # 等待2秒後重試
+    return None
+
 try:
-    sp500 = yf.download('^GSPC', start=start_date, end=data_date_str, progress=False)
-    nasdaq = yf.download('^IXIC', start=start_date, end=data_date_str, progress=False)
-    sox = yf.download('^SOX', start=start_date, end=data_date_str, progress=False)
-    tsm = yf.download('TSM', start=start_date, end=data_date_str, progress=False)
-    usdtwd = yf.download('USDTWD=X', start=start_date, end=data_date_str, progress=False)
-    twii = yf.download('^TWII', start=start_date, end=data_date_str, progress=False)
+    sp500 = download_with_retry('^GSPC', start_date, data_date_str)
+    nasdaq = download_with_retry('^IXIC', start_date, data_date_str)
+    sox = download_with_retry('^SOX', start_date, data_date_str)
+    tsm = download_with_retry('TSM', start_date, data_date_str)
+    usdtwd = download_with_retry('USDTWD=X', start_date, data_date_str)
+    twii = download_with_retry('^TWII', start_date, data_date_str)
     
     # 檢查是否成功下載
     if len(sp500) == 0 or len(twii) == 0:
