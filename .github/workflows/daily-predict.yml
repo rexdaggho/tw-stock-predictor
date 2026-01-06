@@ -20,8 +20,8 @@ jobs:
     - name: 安裝依賴
   run: |
     python -m pip install --upgrade pip
+    python -c "import pip; print(f'pip version: {pip.__version__}')"
     pip install -r requirements.txt
-
     
     - name: 執行預測
       run: python predict.py
