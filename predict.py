@@ -235,7 +235,7 @@ def predict_opening(calculated_data):
     range_width = volatility_range * 2
     
     # 計算信心度
-    consistency_score = (abs(weighted_change) > 0.5 ? 1.0 : 0.7) * 0.95
+    consistency_score = (1.0 if abs(weighted_change) > 0.5 else 0.7) * 0.95
     confidence = int(consistency_score * MODEL_PARAMS['accuracy'] * 100)
     
     # 顯示預測結果
