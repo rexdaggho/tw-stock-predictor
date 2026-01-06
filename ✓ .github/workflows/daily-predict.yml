@@ -27,7 +27,7 @@ jobs:
     
     - name: 上傳結果
       run: |
-        git config --local user.email "bot@example.com"
+        git config --local user.email "action@github.com"
         git config --local user.name "Stock Predictor Bot"
         git add predictions.csv latest_prediction.json
         git commit -m "Daily prediction: $(date +'%Y-%m-%d')" || echo "No changes"
