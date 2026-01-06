@@ -28,13 +28,32 @@ MODEL_PARAMS = {
     'volatility': 1.15    # 波幅係數
 }
 
-# ============ 下載美股數據 ============
-print("📊 正在下載美股數據...")
+# ============ 檢查是否為工作日 ============
+def is_trading_day(date_obj):
+    """檢查是否為工作日（週一到週五）"""
+    return date_obj.weekday() < 5
 
 current_date = datetime.today().date()
-start_date = (current_date - timedelta(days=5)).strftime('%Y-%m-%d')
-data_date_str = current_date.strftime('%Y-%m-%d')
-prediction_date_str = (current_date + timedelta(days=1)).strftime('%Y-%m-%d')
+
+# 如果是週末，往回找到最近的工作日
+data_date = current_date
+while not is_trading_day(data_date):
+    data_date -= timedelta(days=1)
+    if (current_date - data_date).days > 7:  # 防止無限迴圈
+        print("⚠️ 無法找到最近的工作日，使用當前日期")
+        data_date = current_date
+        break
+
+start_date = (data_date - timedelta(days=5)).strftime('%Y-%m-%d')
+data_date_str = data_date.strftime('%Y-%m-%d')
+prediction_date = data_date + timedelta(days=1)
+prediction_date_str = prediction_date.strftime('%Y-%m-%d')
+
+print(f"📅 數據日期: {data_date_str}")
+print(f"📅 預測日期: {prediction_date_str}")
+
+# ============ 下載美股數據 ============
+print("📊 正在下載美股數據...")
 
 try:
     sp500 = yf.download('^GSPC', start=start_date, end=data_date_str, progress=False)
@@ -43,6 +62,12 @@ try:
     tsm = yf.download('TSM', start=start_date, end=data_date_str, progress=False)
     usdtwd = yf.download('USDTWD=X', start=start_date, end=data_date_str, progress=False)
     twii = yf.download('^TWII', start=start_date, end=data_date_str, progress=False)
+    
+    # 檢查是否成功下載
+    if len(sp500) == 0 or len(twii) == 0:
+        print("❌ 無法下載市場數據，可能是市場假期")
+        exit(1)
+        
 except Exception as e:
     print(f"❌ 下載數據失敗: {str(e)}")
     exit(1)
@@ -56,7 +81,7 @@ def safe_get_price(df, index):
     """安全地獲取價格，處理NaN值"""
     try:
         return float(df['Close'].iloc[index])
-    except (IndexError, TypeError):
+    except (IndexError, TypeError, KeyError):
         return float(df['Close'].iloc[-1])
 
 prev_sp500_close = safe_get_price(sp500, -2) if len(sp500) > 1 else safe_get_price(sp500, -1)
